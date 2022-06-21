@@ -7,14 +7,14 @@ const middlewareController = {
             const accessToken = token.split(' ')[1]
             jwt.verify(accessToken, 'mk', (err, user) => {
                 if (err) {
-                    res.status(403).json('token is not valid')
+                    return res.status(403).json('token is not valid')
                 }
                 req.user = user
                 next()
             })
         }
         else {
-            res.status(401).json("You're not authenticated")
+            return res.status(401).json("You're not authenticated")
         }
     },
     verifyTokenAndAdminAuth: (req, res, next) => {
@@ -23,7 +23,7 @@ const middlewareController = {
                 next()
             }
             else {
-                res.status(403).json("You're not permissions")
+                return res.status(403).json("You're not permissions")
             }
         })
     }

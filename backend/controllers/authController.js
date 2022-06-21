@@ -2,6 +2,7 @@ const User = require('../models/User')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
+let refreshTokens = []
 const authController = {
     registerUser: async (req, res) => {
         console.log("cow")
@@ -26,7 +27,7 @@ const authController = {
         return jwt.sign({
             id: user.id,
             admin: user.admin
-        }, 'mk', { expiresIn: "30s" })
+        }, 'mk', { expiresIn: "20s" })
     },
     generateRefreshToken: (user) => {
         return jwt.sign({
@@ -50,6 +51,7 @@ const authController = {
             if (user && validPassword) {
                 const accesstoken = authController.generateAccessToken(user)
                 const refreshToken = authController.generateRefreshToken(user)
+                refreshTokens.push(refreshToken)
                 res.cookie("refreshToken", refreshToken, {
                     httpOnly: true,
                     secure: false,
@@ -69,12 +71,17 @@ const authController = {
         if (!refreshToken) {
             return res.status(401).json("You're not authenticated")
         }
+        if (!refreshTokens.includes(refreshToken)) {
+            return res.status(403).json("Refresh Token is not valid")
+        }
         jwt.verify(refreshToken, 'mk_refresh', (err, user) => {
             if (err) {
                 console.log(err)
             }
+            refreshTokens = refreshTokens.filter((token) => token !== refreshToken)
             const newAccessToken = authController.generateAccessToken(user)
             const newRefreshToken = authController.generateRefreshToken(user)
+            refreshTokens.push(newRefreshToken)
             res.cookie("refreshToken", newRefreshToken, {
                 httpOnly: true,
                 secure: false,
